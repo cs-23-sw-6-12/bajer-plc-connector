@@ -31,10 +31,10 @@ namespace BajerPLCTagServer {
 				try {
 					var myTag = new Tag<BoolPlcMapper, bool>() {
 						Name = "I1:0/0",
-						Gateway = "192.168.73.234",
+						Gateway = PLCAddressInput.Text,
 						PlcType = PlcType.MicroLogix,
 						Protocol = Protocol.ab_eip,
-						Timeout = TimeSpan.FromSeconds(5),
+						Timeout = TimeSpan.FromSeconds(10),
 						DebugLevel = DebugLevel.Warn
 					};
 
