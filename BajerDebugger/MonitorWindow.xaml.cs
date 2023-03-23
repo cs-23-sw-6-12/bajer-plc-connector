@@ -39,6 +39,7 @@ namespace BajerDebugger {
 				};
 				_bajerStates.Add(state.DateTime, state);
 				BajerStateList.Items.Refresh();
+				EnableInputs();
 			});
 		}
 

@@ -15,6 +15,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Globalization;
+using System.Net;
 
 namespace BajerPLCTagServer {
 	/// <summary>
@@ -29,27 +31,12 @@ namespace BajerPLCTagServer {
 			Dispatcher.InvokeAsync(async Task () => {
 				StartServerButton.IsEnabled = false;
 				try {
-					var myTag = new Tag<BoolPlcMapper, bool>() {
-						Name = "I1:0/0",
-						Gateway = PLCAddressInput.Text,
-						PlcType = PlcType.MicroLogix,
-						Protocol = Protocol.ab_eip,
-						Timeout = TimeSpan.FromSeconds(10),
-						DebugLevel = DebugLevel.Warn
-					};
-
-					await myTag.InitializeAsync();
-					Console.WriteLine(myTag.GetStatus());
-					//Read value from PLC
-					//Value will also be accessible at myTag.Value
-					bool myDint = await myTag.ReadAsync();
-					
-					//Write to console
-					Console.WriteLine(myDint);
 					var bajerServer = new BAjERServer();
-					bajerServer.Start(System.Net.IPAddress.Parse(BajerAddressInput.Text), ushort.Parse(BajerPortInput.Text));
+					bajerServer.Start(IPAddress.Parse(BajerAddressInput.Text), ushort.Parse(BajerPortInput.Text));
 
-					var serverMonitorWindow = new ServerMonitorWindow(bajerServer);
+					//await TestPlcConnectionAsync();
+
+					var serverMonitorWindow = new ServerMonitorWindow(bajerServer, PLCAddressInput.Text);
 					
 					serverMonitorWindow.Show();
 					this.Close();
@@ -58,6 +45,22 @@ namespace BajerPLCTagServer {
 				}
 				StartServerButton.IsEnabled = true;
 			});
+		}
+
+		private async Task TestPlcConnectionAsync() {
+			var myTag = new Tag<IntPlcMapper, short>() {
+				Name = "O0:0",
+				Gateway = PLCAddressInput.Text,
+				PlcType = PlcType.MicroLogix,
+				Protocol = Protocol.ab_eip,
+				Timeout = TimeSpan.FromSeconds(10)
+			};
+
+			await myTag.InitializeAsync();
+
+			myTag.Dispose();
+
+			LibPlcTag.Shutdown();
 		}
 	}
 }

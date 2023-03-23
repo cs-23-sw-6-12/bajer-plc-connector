@@ -5,8 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BajerPLCTagServer"
         mc:Ignorable="d"
-        Title="BAjER server monitor" Height="450" Width="800">
+        Title="BAjER server monitor" Height="450" Width="800"
+        Closed="Window_Closed">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="21"/>
+        </Grid.RowDefinitions>
+        <TextBox IsReadOnly="true" Name="LogTextBox" TextWrapping="Wrap" FontFamily="Consolas"/>
+        <StatusBar  Grid.Row="1">
+            <TextBlock Name="StatusText"></TextBlock>
+        </StatusBar>
     </Grid>
 </Window>
