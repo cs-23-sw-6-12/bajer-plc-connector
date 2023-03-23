@@ -20,8 +20,16 @@
                 </StackPanel>
             </StackPanel>
 
-            <TextBlock Text="PLC address:"></TextBlock>
-            <TextBox Name="PLCAddressInput" Text="192.168.97.234" Width="150" HorizontalAlignment="Left"></TextBox>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="PLC address:"></TextBlock>
+                    <TextBox Name="PLCAddressInput" Text="192.168.97.234" Width="150" HorizontalAlignment="Left"></TextBox>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="5,0,0,0">
+                    <TextBlock Text="Reset pin"></TextBlock>
+                    <TextBox Text="3" Name="PLCResetPin" Width="75" HorizontalAlignment="Left"></TextBox>
+                </StackPanel>
+            </StackPanel>
 
             <Button Name="StartServerButton" Content="Start server" Margin="0,5,0,0" Click="StartServerButton_Click"></Button>
         </StackPanel>

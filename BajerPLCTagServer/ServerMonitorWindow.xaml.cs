@@ -27,10 +27,11 @@ namespace BajerPLCTagServer {
 		private string _plcGateway;
 		private Tag<IntPlcMapper, short> _inputTag;
 		private Tag<IntPlcMapper, short> _outputTag;
+		private Tag<BoolPlcMapper, bool> _resetTag;
 		private byte _inputCount;
 		private byte _outputCount;
 		
-		public ServerMonitorWindow(IBAjERServer server, string plcGateway) {
+		public ServerMonitorWindow(IBAjERServer server, string plcGateway, short resetBit) {
 			InitializeComponent();
 			_server = server;
 			_plcGateway = plcGateway;
@@ -55,6 +56,15 @@ namespace BajerPLCTagServer {
 				Timeout = TimeSpan.FromSeconds(10)
 			};
 
+			_resetTag = new Tag<BoolPlcMapper, bool>()
+			{
+				Name = "B3:0/" + resetBit.ToString(),
+				Gateway = plcGateway,
+				PlcType = PlcType.MicroLogix,
+				Protocol = Protocol.ab_eip,
+				Timeout = TimeSpan.FromSeconds(10)
+			};
+
 			_server.StepHandler = StepHandler;
 			_server.SetupHandler = SetupHandler;
 			_server.ResetHandler = ResetHandler;
@@ -62,9 +72,7 @@ namespace BajerPLCTagServer {
 			_server.Disconnected = DisconnectedHandler;
 			Dispatcher.BeginInvoke(async Task () => {
 				try {
-					await _inputTag.InitializeAsync();
-					await _outputTag.InitializeAsync();
-					await Task.WhenAll(_inputTag.InitializeAsync(), _outputTag.InitializeAsync());
+					await Task.WhenAll(_inputTag.InitializeAsync(), _outputTag.InitializeAsync(), _resetTag.InitializeAsync());
 				} catch (Exception ex) {
 					PrintToLog($"Could not connect to PLC: {ex.Message}");
 					StatusText.Text = "Failed to connect to PLC";
@@ -88,9 +96,17 @@ namespace BajerPLCTagServer {
 		}
 
 		private async Task ResetHandler() {
-			_ = Dispatcher.BeginInvoke(() => {
+			_ = Dispatcher.BeginInvoke(async Task () => {
 				PrintToLog($"Reset");
 			});
+
+			await _inputTag.WriteAsync(0);
+			await _resetTag.WriteAsync(true);
+
+
+			await Task.Delay(500);
+
+			await _resetTag.WriteAsync(false);
 		}
 
 		private async Task SetupHandler(byte inputs, byte outputs) {
@@ -112,7 +128,7 @@ namespace BajerPLCTagServer {
 
 			await Task.Delay(500);
 
-			var readBits = DecodeOutputs(await _inputTag.ReadAsync());
+			var readBits = DecodeOutputs(await _outputTag.ReadAsync());
 
 			_ = Dispatcher.BeginInvoke(() => {
 				PrintToLog("Sent " + readBits.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current));
@@ -123,6 +139,7 @@ namespace BajerPLCTagServer {
 
 		private void PrintToLog(string message) {
 			LogTextBox.Text += message + "\n";
+			LogTextBox.ScrollToEnd();
 		} 
 
 		private short EncodeInputs(List<bool> inputs) {

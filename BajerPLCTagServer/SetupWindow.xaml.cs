@@ -34,9 +34,9 @@ namespace BajerPLCTagServer {
 					var bajerServer = new BAjERServer();
 					bajerServer.Start(IPAddress.Parse(BajerAddressInput.Text), ushort.Parse(BajerPortInput.Text));
 
-					//await TestPlcConnectionAsync();
+					await TestPlcConnectionAsync();
 
-					var serverMonitorWindow = new ServerMonitorWindow(bajerServer, PLCAddressInput.Text);
+					var serverMonitorWindow = new ServerMonitorWindow(bajerServer, PLCAddressInput.Text, short.Parse(PLCResetPin.Text));
 					
 					serverMonitorWindow.Show();
 					this.Close();

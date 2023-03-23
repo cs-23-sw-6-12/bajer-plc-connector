@@ -33,7 +33,7 @@ namespace BAjER {
 
 		private async Task ListenAndService() {
 			if (_listener == null) {
-				throw new Exception("ListenAndService was invoked buy listener was null");
+				throw new Exception("ListenAndService was invoked but listener was null");
 			}
 			while (true) {
 				var client = _listener.AcceptTcpClient();
