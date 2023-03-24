@@ -30,7 +30,9 @@ namespace BajerPLCTagServer {
 		private Tag<BoolPlcMapper, bool> _resetTag;
 		private byte _inputCount;
 		private byte _outputCount;
-		
+		private ushort _resetDelay;
+		private ushort _stepDelay;
+
 		public ServerMonitorWindow(IBAjERServer server, string plcGateway, short resetBit) {
 			InitializeComponent();
 			_server = server;
@@ -39,6 +41,9 @@ namespace BajerPLCTagServer {
 
 			_inputCount = 0;
 			_outputCount = 0;
+
+			_resetDelay = ushort.Parse(ResetDelayInput.Text);
+			_stepDelay = ushort.Parse(StepDelayInput.Text);
 
 			_inputTag = new Tag<IntPlcMapper, short>() {
 				Name = "B3:0",
@@ -98,13 +103,14 @@ namespace BajerPLCTagServer {
 		private async Task ResetHandler() {
 			_ = Dispatcher.BeginInvoke(async Task () => {
 				PrintToLog($"Reset");
+				PrintToLog($"Waiting {_resetDelay}");
 			});
 
 			await _inputTag.WriteAsync(0);
 			await _resetTag.WriteAsync(true);
 
 
-			await Task.Delay(500);
+			await Task.Delay((int) _resetDelay);
 
 			await _resetTag.WriteAsync(false);
 		}
@@ -121,12 +127,13 @@ namespace BajerPLCTagServer {
 		private async Task<List<bool>> StepHandler(List<bool> inputs) {
 			_ = Dispatcher.BeginInvoke(() => {
 				PrintToLog("Step " + inputs.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current));
+				PrintToLog($"Waiting {_stepDelay}");
 			});
 
 
 			await _inputTag.WriteAsync(EncodeInputs(inputs));
 
-			await Task.Delay(500);
+			await Task.Delay((int) _stepDelay);
 
 			var readBits = DecodeOutputs(await _outputTag.ReadAsync());
 
@@ -161,5 +168,19 @@ namespace BajerPLCTagServer {
 		private void Window_Closed(object sender, EventArgs e) {
 			_server.Stop();
 		}
-	}
+
+        private void ApplyButton_Click(object sender, RoutedEventArgs e)
+        {
+			try
+			{
+				_resetDelay = ushort.Parse(ResetDelayInput.Text);
+				_stepDelay = ushort.Parse(StepDelayInput.Text);
+				PrintToLog($"Updated reset delay to {_resetDelay} and step delay to {_stepDelay}");
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.ToString());
+			}
+        }
+    }
 }
