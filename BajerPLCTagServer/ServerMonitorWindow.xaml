@@ -13,10 +13,15 @@
             <RowDefinition/>
             <RowDefinition Height="21"/>
         </Grid.RowDefinitions>
-        <TextBox IsReadOnly="true" Name="LogTextBox" TextWrapping="Wrap" FontFamily="Consolas" Grid.Row="1"/>
+        <DataGrid Grid.Row="1" Name="LogGrid" ItemsSource="{Binding}" CanUserSortColumns="False" CanUserDeleteRows="False" CanUserAddRows="False" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Time" Binding="{Binding Time}" />
+                <DataGridTextColumn Header="Message" Binding="{Binding Message}"/>
+            </DataGrid.Columns>
+        </DataGrid>
         <StackPanel Orientation="Horizontal" Margin="10,5,10,5">
-            <TextBox Name="ResetDelayInput" Text="100" Width="50" Margin="10,0,0,0"></TextBox>
-            <TextBox Name="StepDelayInput" Text="100" Width="50" Margin="10,0,0,0"></TextBox>
+            <TextBlock Text="Step delay:"></TextBlock>
+            <TextBox Name="StepDelayInput" Text="20" Width="50" Margin="10,0,0,0"></TextBox>
             <Button Name="ApplyButton" Content="Apply" Margin="10,0,0,0" Width="51" Click="ApplyButton_Click"></Button>
         </StackPanel>
         <StatusBar  Grid.Row="2" Margin="0,376,0,-355">

@@ -5,7 +5,12 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>162_kvalitet-rund_4x-100_3201.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="162_kvalitet-rund_4x-100_3201.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="libplctag" Version="1.1.1" />

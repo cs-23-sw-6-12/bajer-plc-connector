@@ -27,7 +27,16 @@ namespace BAjER {
 		public void Start(IPAddress address, int port) {
 			_listener = new TcpListener(address, port);
 			_listener.Start();
-			_listenAndServiceThread = new Thread(() => { ListenAndService().Wait(); });
+			_listenAndServiceThread = new Thread(() => {
+				try
+				{
+					ListenAndService().Wait();
+				}
+				catch (ThreadInterruptedException)
+                {
+					return;
+				}
+			});
 			_listenAndServiceThread.Start();
 		}
 
@@ -36,7 +45,7 @@ namespace BAjER {
 				throw new Exception("ListenAndService was invoked but listener was null");
 			}
 			while (true) {
-				var client = _listener.AcceptTcpClient();
+				var client = await _listener.AcceptTcpClientAsync();
 				var clientStream = client.GetStream();
 
 				Connected?.Invoke();

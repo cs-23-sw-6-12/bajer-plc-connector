@@ -31,36 +31,22 @@ namespace BajerPLCTagServer {
 			Dispatcher.InvokeAsync(async Task () => {
 				StartServerButton.IsEnabled = false;
 				try {
+					var plcController = new TagPLCController(PLCAddressInput.Text, byte.Parse(PLCResetPin.Text));
+					await plcController.Init();
+
 					var bajerServer = new BAjERServer();
 					bajerServer.Start(IPAddress.Parse(BajerAddressInput.Text), ushort.Parse(BajerPortInput.Text));
 
-					await TestPlcConnectionAsync();
-
-					var serverMonitorWindow = new ServerMonitorWindow(bajerServer, PLCAddressInput.Text, short.Parse(PLCResetPin.Text));
+					var serverMonitorWindow = new ServerMonitorWindow(bajerServer, plcController);
 					
 					serverMonitorWindow.Show();
 					this.Close();
 				} catch (Exception err) {
+					LibPlcTag.Shutdown();
 					MessageBox.Show(err.ToString());
 				}
 				StartServerButton.IsEnabled = true;
 			});
-		}
-
-		private async Task TestPlcConnectionAsync() {
-			var myTag = new Tag<IntPlcMapper, short>() {
-				Name = "O0:0",
-				Gateway = PLCAddressInput.Text,
-				PlcType = PlcType.MicroLogix,
-				Protocol = Protocol.ab_eip,
-				Timeout = TimeSpan.FromSeconds(10)
-			};
-
-			await myTag.InitializeAsync();
-
-			myTag.Dispose();
-
-			LibPlcTag.Shutdown();
 		}
 	}
 }

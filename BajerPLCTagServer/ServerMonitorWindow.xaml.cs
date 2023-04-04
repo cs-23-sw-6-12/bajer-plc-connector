@@ -17,75 +17,46 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Threading;
 using System.DirectoryServices.ActiveDirectory;
+using System.Collections.ObjectModel;
 
 namespace BajerPLCTagServer {
 	/// <summary>
 	/// Interaction logic for ServerMonitor.xaml
 	/// </summary>
+	/// 
+	class LogMessage
+    {
+		public LogMessage(DateTime time, string message)
+        {
+			Time = time;
+			Message = message;
+        }
+		public DateTime Time { get; set; }
+		public string Message { get; set; }
+	}
 	public partial class ServerMonitorWindow : Window {
 		private IBAjERServer _server;
-		private string _plcGateway;
-		private Tag<IntPlcMapper, short> _inputTag;
-		private Tag<IntPlcMapper, short> _outputTag;
-		private Tag<BoolPlcMapper, bool> _resetTag;
-		private byte _inputCount;
-		private byte _outputCount;
-		private ushort _resetDelay;
+		private IPLCController _plcController;
 		private ushort _stepDelay;
+		private ObservableCollection<LogMessage> _logMessages;
 
-		public ServerMonitorWindow(IBAjERServer server, string plcGateway, short resetBit) {
+		public ServerMonitorWindow(IBAjERServer server, IPLCController plcController) {
 			InitializeComponent();
 			_server = server;
-			_plcGateway = plcGateway;
+			_plcController = plcController;
+			_logMessages = new ObservableCollection<LogMessage>();
 			StatusText.Text = "Connecting to PLC...";
 
-			_inputCount = 0;
-			_outputCount = 0;
+            LogGrid.ItemsSource = _logMessages;
 
-			_resetDelay = ushort.Parse(ResetDelayInput.Text);
 			_stepDelay = ushort.Parse(StepDelayInput.Text);
-
-			_inputTag = new Tag<IntPlcMapper, short>() {
-				Name = "B3:0",
-				Gateway = plcGateway,
-				PlcType = PlcType.MicroLogix,
-				Protocol = Protocol.ab_eip,
-				Timeout = TimeSpan.FromSeconds(10)
-			};
-
-			_outputTag = new Tag<IntPlcMapper, short>() {
-				Name = "O0:0",
-				Gateway = plcGateway,
-				PlcType = PlcType.MicroLogix,
-				Protocol = Protocol.ab_eip,
-				Timeout = TimeSpan.FromSeconds(10)
-			};
-
-			_resetTag = new Tag<BoolPlcMapper, bool>()
-			{
-				Name = "B3:0/" + resetBit.ToString(),
-				Gateway = plcGateway,
-				PlcType = PlcType.MicroLogix,
-				Protocol = Protocol.ab_eip,
-				Timeout = TimeSpan.FromSeconds(10)
-			};
 
 			_server.StepHandler = StepHandler;
 			_server.SetupHandler = SetupHandler;
 			_server.ResetHandler = ResetHandler;
 			_server.Connected = ConnectedHandler;
 			_server.Disconnected = DisconnectedHandler;
-			Dispatcher.BeginInvoke(async Task () => {
-				try {
-					await Task.WhenAll(_inputTag.InitializeAsync(), _outputTag.InitializeAsync(), _resetTag.InitializeAsync());
-				} catch (Exception ex) {
-					PrintToLog($"Could not connect to PLC: {ex.Message}");
-					StatusText.Text = "Failed to connect to PLC";
-					return;
-				}
-				PrintToLog("Connected to PLC");
-				StatusText.Text = "Waiting for client";
-			});
+			StatusText.Text = "Waiting for client";
 		}
 
 		private void DisconnectedHandler(string reason) {
@@ -103,66 +74,38 @@ namespace BajerPLCTagServer {
 		private async Task ResetHandler() {
 			_ = Dispatcher.BeginInvoke(async Task () => {
 				PrintToLog($"Reset");
-				PrintToLog($"Waiting {_resetDelay}");
 			});
 
-			await _inputTag.WriteAsync(0);
-			await _resetTag.WriteAsync(true);
-
-
-			await Task.Delay((int) _resetDelay);
-
-			await _resetTag.WriteAsync(false);
+			await _plcController.Reset();
 		}
 
 		private async Task SetupHandler(byte inputs, byte outputs) {
 			_ = Dispatcher.BeginInvoke(() => {
 				PrintToLog($"setup {inputs} {outputs}");
 			});
-
-			_inputCount = inputs;
-			_outputCount = outputs;
+			await _plcController.Setup(inputs, outputs);
 		}
 
 		private async Task<List<bool>> StepHandler(List<bool> inputs) {
-			_ = Dispatcher.BeginInvoke(() => {
-				PrintToLog("Step " + inputs.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current));
-				PrintToLog($"Waiting {_stepDelay}");
-			});
-
-
-			await _inputTag.WriteAsync(EncodeInputs(inputs));
+			await _plcController.SetInput(inputs);
 
 			await Task.Delay((int) _stepDelay);
 
-			var readBits = DecodeOutputs(await _outputTag.ReadAsync());
+			var readBits = await _plcController.ReadOutput();
 
 			_ = Dispatcher.BeginInvoke(() => {
-				PrintToLog("Sent " + readBits.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current));
+				var message = "Step " + inputs.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current) +
+					" - Sent " + readBits.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current);
+				PrintToLog(message);
 			});
 
 			return readBits;
 		}
 
 		private void PrintToLog(string message) {
-			LogTextBox.Text += message + "\n";
-			LogTextBox.ScrollToEnd();
-		} 
-
-		private short EncodeInputs(List<bool> inputs) {
-			short rv = 0;
-			for (var i = 0; i < inputs.Count; i++) {
-				rv |= (short)((inputs[i] ? 1 : 0) << i);
-			}
-			return rv;
-		}
-
-		private List<bool> DecodeOutputs(short output) {
-			var rv = new List<bool>();
-			for (var i = 0; i < _outputCount; i++) {
-				rv.Add((output & ((short)(1 << i))) != 0);
-			}
-			return rv;
+			var lm = new LogMessage(DateTime.Now, message);
+			_logMessages.Add(lm);
+			LogGrid.ScrollIntoView(lm);
 		}
 
 		private void Window_Closed(object sender, EventArgs e) {
@@ -173,9 +116,8 @@ namespace BajerPLCTagServer {
         {
 			try
 			{
-				_resetDelay = ushort.Parse(ResetDelayInput.Text);
 				_stepDelay = ushort.Parse(StepDelayInput.Text);
-				PrintToLog($"Updated reset delay to {_resetDelay} and step delay to {_stepDelay}");
+				PrintToLog($"Updated step delay to {_stepDelay}");
 			}
 			catch (Exception ex)
 			{
