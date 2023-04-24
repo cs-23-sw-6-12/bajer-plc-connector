@@ -9,22 +9,16 @@
         Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
             <RowDefinition/>
-            <RowDefinition Height="21"/>
+            <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
-        <DataGrid Grid.Row="1" Name="LogGrid" ItemsSource="{Binding}" CanUserSortColumns="False" CanUserDeleteRows="False" CanUserAddRows="False" AutoGenerateColumns="False">
+        <DataGrid Name="LogGrid" ItemsSource="{Binding}" CanUserSortColumns="False" CanUserDeleteRows="False" CanUserAddRows="False" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Time" Binding="{Binding Time}" />
                 <DataGridTextColumn Header="Message" Binding="{Binding Message}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <StackPanel Orientation="Horizontal" Margin="10,5,10,5">
-            <TextBlock Text="Step delay:"></TextBlock>
-            <TextBox Name="StepDelayInput" Text="20" Width="50" Margin="10,0,0,0"></TextBox>
-            <Button Name="ApplyButton" Content="Apply" Margin="10,0,0,0" Width="51" Click="ApplyButton_Click"></Button>
-        </StackPanel>
-        <StatusBar  Grid.Row="2" Margin="0,376,0,-355">
+        <StatusBar  Grid.Row="1" Margin="0,376,0,-355">
             <TextBlock Name="StatusText"></TextBlock>
         </StatusBar>
     </Grid>

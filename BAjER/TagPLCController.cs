@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BajerPLCTagServer
 {
-    class TagPLCController : IPLCController
+    public class TagPLCController : IPLCController
     {
         public Tag<IntPlcMapper, short> _outputTag;
         public Tag<IntPlcMapper, short> _inputTag;
@@ -45,10 +45,6 @@ namespace BajerPLCTagServer
             if (_inputTag != null)
                 await _inputTag.WriteAsync(0);
             await _resetTag.WriteAsync(true);
-
-
-            await Task.Delay(20);
-
             await _resetTag.WriteAsync(false);
         }
 
@@ -84,8 +80,7 @@ namespace BajerPLCTagServer
                     Gateway = _gateway,
                     PlcType = PlcType.MicroLogix,
                     Protocol = Protocol.ab_eip,
-                    Timeout = TimeSpan.FromSeconds(10),
-                    ArrayDimensions = new int[] { outputSize }
+                    Timeout = TimeSpan.FromSeconds(10)
                 };
                 await _outputTag.InitializeAsync();
 
@@ -95,9 +90,10 @@ namespace BajerPLCTagServer
 
         public void Stop()
         {
-            _inputTag.Dispose();
+			_inputTag.Dispose();
             _outputTag.Dispose();
             _resetTag.Dispose();
+            LibPlcTag.Shutdown();
         }
 
         private short EncodeInputs(List<bool> inputs)
