@@ -65,7 +65,7 @@ namespace BajerPLCTagServer {
 
 		private async Task ResetHandler() {
 			_ = Dispatcher.BeginInvoke(async Task () => {
-				PrintToLog(MessageType.RESET, $"Reset");
+				//PrintToLog(MessageType.RESET, $"Reset");
 			});
 
 			await _plcController.Reset();
@@ -85,7 +85,7 @@ namespace BajerPLCTagServer {
 			_ = Dispatcher.BeginInvoke(() => {
 				var message = "Step " + inputs.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current) +
 					" - Sent " + readBits.Select(input => input ? "1" : "0").Aggregate((prev, current) => prev + "," + current);
-				PrintToLog(MessageType.STEP, message);
+				//PrintToLog(MessageType.STEP, message);
 			});
 
 			return readBits;
