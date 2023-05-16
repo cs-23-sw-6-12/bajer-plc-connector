@@ -5,11 +5,11 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>162_kvalitet-rund_4x-100_3201.ico</ApplicationIcon>
+    <ApplicationIcon>BajerServerLogo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="162_kvalitet-rund_4x-100_3201.ico" />
+    <Content Include="BajerServerLogo.ico" />
   </ItemGroup>
 
   <ItemGroup>
